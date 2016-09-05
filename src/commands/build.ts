@@ -1,5 +1,7 @@
 import {HttpMethod} from "../router/http.method";
 import {BuildUtil} from "../router/build.util";
+import {Lamb} from "../lamb";
+import {RoutingUtil} from "../router/routing.util";
 
 const fs = require("fs");
 const path = require("path");
@@ -7,6 +9,9 @@ const mkdirp = require('mkdirp');
 const Promise = require("bluebird");
 const webpack = require("webpack");
 const Zip = require('node-zip');
+
+const BUILD_DIR = BuildUtil.getBuildDirectory();
+const TEMPLATE_DIR = path.join(__dirname, "../templates");
 
 interface IBuildContext {
   inputFile: string;
@@ -17,8 +22,21 @@ interface IBuildContext {
   release: boolean;
 }
 
+export function clean() {
+  logMessage(`clean build directory`);
+  return Promise.fromCallback(callback => {
+    fs.readdir(BUILD_DIR, callback);
+  }).then(files => {
+    return Promise.all(files.map(file => {
+      return Promise.fromCallback(callback => {
+        fs.unlink(path.join(BUILD_DIR, file), callback);
+      });
+    }));
+  })
+}
+
 function getTemplate(templateName: string) {
-  return readFile(path.join(__dirname, "templates"), templateName);
+  return readFile(TEMPLATE_DIR, templateName);
 }
 
 function renderTemplate(templateName: string, data: { [key: string]: string }) {
@@ -45,17 +63,22 @@ function writeFile(directory: string, fileName: string, content: string, encodin
 }
 
 function createDirectory(directory: string) {
+  logMessage("create build directory");
   return Promise.fromCallback(callback => {
     mkdirp(directory, callback);
   });
 }
 
+function logMessage(message: string) {
+  console.log(`[*] ${message}`);
+}
+
 function buildWrapper(context: IBuildContext) {
   return renderTemplate("wrapper.js", {
-      app: context.inputFile,
-      url: context.url,
-      method: context.method
-    })
+    app: context.inputFile,
+    url: context.url,
+    method: context.method
+  })
     .then(template => {
       return writeFile(
         context.outputDirectory,
@@ -134,10 +157,37 @@ function buildZip(context: IBuildContext) {
   });
 }
 
-export function build(context: IBuildContext) {
-  return createDirectory(context.outputDirectory)
-    .then(() => buildWrapper(context))
-    .then(() => buildBundle(context))
-    .then(() => buildLauncher(context))
-    .then(() => buildZip(context));
+
+export function app(appPath: string, release: boolean) {
+  logMessage(`start build for ${release ? "release " : ""}${appPath}`);
+
+  let app = require(appPath) as Lamb;
+  let routeNodes = RoutingUtil.getRouteTree(app.route);
+
+  let promiseChain = createDirectory(BUILD_DIR)
+    .then(() => clean());
+
+  for(let routeNode of routeNodes) {
+
+    let name = BuildUtil.getName(routeNode.url, routeNode.method);
+    let context = {
+      inputFile: appPath,
+      outputDirectory: BUILD_DIR,
+      name: name,
+      url: routeNode.url,
+      method: routeNode.method,
+      release: release
+    };
+
+    promiseChain.then(() => {
+      logMessage(`building ${routeNode.method} ${routeNode.url}`);
+
+      return buildWrapper(context)
+        .then(() => buildBundle(context))
+        .then(() => buildLauncher(context))
+        .then(() => buildZip(context));
+    });
+  }
+
+  return promiseChain;
 }

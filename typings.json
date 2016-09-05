@@ -1,11 +1,19 @@
 {
   "globalDependencies": {
-    "aws-sdk": "registry:dt/aws-sdk#0.0.0+20160811005841",
+    "aws-apigateway": "github:ingenieux/aws-sdk-typescript/output/typings/aws-apigateway.d.ts",
+    "aws-dynamodb": "github:ingenieux/aws-sdk-typescript/output/typings/aws-dynamodb.d.ts",
+    "aws-iam": "github:ingenieux/aws-sdk-typescript/output/typings/aws-iam.d.ts",
+    "aws-lambda": "github:ingenieux/aws-sdk-typescript/output/typings/aws-lambda.d.ts",
+    "aws-s3": "github:ingenieux/aws-sdk-typescript/output/typings/aws-s3.d.ts",
+    "aws-sdk": "github:ingenieux/aws-sdk-typescript/output/typings/aws-sdk.d.ts",
     "bluebird": "registry:dt/bluebird#3.0.0+20160811111256",
     "chai": "registry:dt/chai#3.4.0+20160601211834",
-    "es6-shim": "registry:dt/es6-shim#0.31.2+20160602141504",
-    "lodash": "registry:dt/lodash#4.14.0+20160817155621",
+    "es6-promise": "registry:dt/es6-promise#0.0.0+20160614011821",
+    "levelup": "registry:dt/levelup#0.0.0+20160316155526",
+    "lodash": "registry:dt/lodash#4.14.0+20160830145422",
     "mocha": "registry:dt/mocha#2.2.5+20160720003353",
-    "node": "registry:dt/node#6.0.0+20160815222444"
-  }
+    "node": "registry:dt/node#6.0.0+20160815222444",
+    "reflect-metadata": "registry:dt/reflect-metadata#0.0.0+20160630155503"
+  },
+  "dependencies": {}
 }

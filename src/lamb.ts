@@ -1,7 +1,7 @@
 import {Router} from "./router/router";
 import {HttpMethod} from "./router/http.method";
 import {RoutingUtil} from "./router/routing.util";
-import {Database} from "./database/database";
+import * as Promise from "bluebird";
 
 
 export class Lamb extends Router {
@@ -14,8 +14,7 @@ export class Lamb extends Router {
 
     let context = {
       event: aws.event,
-      context: aws.context,
-      db: new Database()
+      context: aws.context
     };
 
     let callback = (err:Error, data?:any) => {

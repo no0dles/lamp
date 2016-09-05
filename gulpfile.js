@@ -10,7 +10,7 @@ var tsProject = ts.createProject("tsconfig.json");
 
 gulp.task("watch", ["build"], function () {
   gulp.watch(["src/**/*.ts", "example/**/*.ts"], ["compile-ts"]);
-  gulp.watch(["src/tools/templates/**/*.js"], ["copy-assets"]);
+  gulp.watch(["src/templates/**/*"], ["copy-assets"]);
 });
 
 gulp.task("test", function () {
@@ -28,19 +28,28 @@ gulp.task("test", function () {
 gulp.task("build", ["compile-ts", "copy-assets"]);
 
 gulp.task("copy-assets", function() {
-  return gulp.src("src/tools/templates/**/*.js")
-    .pipe(gulp.dest("dist/src/tools/templates"));
+  return gulp.src("src/templates/**/*")
+    .pipe(gulp.dest("dist/src/templates"));
 });
 
 gulp.task("compile-ts", function () {
-  return tsProject.src()
-    .pipe(sourcemaps.init())
-    .pipe(ts(tsProject))
-    .pipe(sourcemaps.write())
-    .pipe(gulp.dest("dist"));
+  var result = tsProject.src()
+    .pipe(ts(tsProject));
+
+  result.js.pipe(gulp.dest("dist"));
+  result.dts.pipe(gulp.dest("dist"));
 });
 
 gulp.task('clean', function () {
   return gulp.src(['dist', 'tmp'], {read: false})
     .pipe(clean());
+});
+
+gulp.task("build-dts", function() {
+  require('dts-generator').default({
+    name: 'lamb',
+    project: '.',
+    out: 'dist/lamb.d.ts',
+    excludes: ['typings/**/*.d.ts', 'node_modules/**/*.d.ts']
+  });
 });

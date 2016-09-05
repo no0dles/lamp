@@ -1,37 +1,57 @@
+#!/usr/bin/env node
+
 import * as path from "path";
-import {build} from "./build";
-import {RoutingUtil} from "../router/routing.util";
-import {Lamb} from "../lamb";
-import {BuildUtil} from "../router/build.util";
+import * as fs from "fs";
 
-function cli() {
-  if(process.argv.length < 3) {
-    return console.log("Please pass your app.js");
+const PACKAGE_PATH = "../../../package.json";
+const CMD_PATH = path.join(__dirname, "../commands");
+
+const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+const ARGUMENT_NAMES = /([^\s,]+)/g;
+
+const program = require('commander');
+const version = require(PACKAGE_PATH)["version"];
+
+program.version(version);
+
+function addCommand(file: string) {
+  let module = require(file);
+
+  let cmd = path.basename(file, '.js');
+
+  for(let key in module) {
+    let params = getParamNames(module[key])
+      .map(param => `<${param}>`)
+      .join(" ");
+
+    program
+      .command(`${cmd}:${key} ${params}`)
+      .action(function() {
+        let promise = module[key].apply(this, arguments);
+        if(promise && promise.then) {
+          promise.then(res => {
+            console.log(res);
+          });
+        }
+      });
   }
-
-  let appPath = path.join(process.cwd(), process.argv[2]);
-  let app = require(appPath) as Lamb;
-
-  let routeNodes = RoutingUtil.getRouteTree(app.route);
-
-  for(let routeNode of routeNodes) {
-
-    let name = BuildUtil.getName(routeNode.url, routeNode.method);
-
-    build({
-      inputFile: appPath,
-      outputDirectory: BuildUtil.getBuildDirectory(),
-      name: name,
-      url: routeNode.url,
-      method: routeNode.method,
-      release: true
-    }).then(() => {
-      console.log(`built ${name} successfully`);
-    }).catch(err => {
-      console.log(err);
-    });
-  }
-
 }
 
-cli();
+function getParamNames(func) {
+  var fnStr = func.toString().replace(STRIP_COMMENTS, '');
+  var result = fnStr.slice(fnStr.indexOf('(')+1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
+  if(result === null)
+    result = [];
+  return result;
+}
+
+
+let files = fs.readdirSync(CMD_PATH);
+
+for(let file of files) {
+  if(path.extname(file) === ".js") {
+    addCommand(path.join(CMD_PATH, file));
+  }
+}
+
+program.parse(process.argv);
