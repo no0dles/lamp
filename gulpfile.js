@@ -44,12 +44,3 @@ gulp.task('clean', function () {
   return gulp.src(['dist', 'tmp'], {read: false})
     .pipe(clean());
 });
-
-gulp.task("build-dts", function() {
-  require('dts-generator').default({
-    name: 'lamb',
-    project: '.',
-    out: 'dist/lamb.d.ts',
-    excludes: ['typings/**/*.d.ts', 'node_modules/**/*.d.ts']
-  });
-});

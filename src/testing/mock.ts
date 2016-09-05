@@ -38,5 +38,5 @@ export class Mock {
 
       this.app.run(url, method);
     });
-  };
+  }
 }

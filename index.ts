@@ -5,7 +5,7 @@ import {Mock} from "./src/testing/mock";
 var builder: {
   (): Lamb;
   Router: { new(): Router };
-  Mock: { new(): Mock }
+  Mock: { new(path: string): Mock }
 };
 
 builder = (() => {
